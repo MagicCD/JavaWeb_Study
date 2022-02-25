@@ -1549,7 +1549,7 @@ VALUES
 
 
 
-##### <font size="5rem">1. 非空约束</font>
+#### <font size="5rem">1. 非空约束</font>
 
 
 
@@ -1623,7 +1623,7 @@ VALUES
 
 
 
-##### <font size="5rem">2. 唯一约束</font>
+#### <font size="5rem">2. 唯一约束</font>
 
 
 
@@ -1705,7 +1705,7 @@ VALUES
 
 
 
-##### <font size="5rem">3. 主键约束</font>
+#### <font size="5rem">3. 主键约束</font>
 
 
 
@@ -1789,7 +1789,7 @@ VALUES
 
 
 
-##### <font size="5rem">4. 默认约束</font>
+#### <font size="5rem">4. 默认约束</font>
 
 
 
@@ -1868,9 +1868,7 @@ VALUES
 
 
 
-##### <font size="5rem">5. 外键约束</font>
-
-
+#### <font size="5rem">5. 外键约束</font>
 
 <iframe src="//player.bilibili.com/player.html?aid=379163696&bvid=BV1Qf4y1T7Hx&cid=440652780&page=21" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" height="650px"> </iframe>
 
@@ -2195,3 +2193,210 @@ alter table tb_order_goods add constraint fk_goods_id foreign key(goods_id) refe
 
 
 <iframe src="//player.bilibili.com/player.html?aid=379163696&bvid=BV1Qf4y1T7Hx&cid=440652806&page=24" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" height="650px"> </iframe>
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 1.8 多表查询
+
+
+
++ 笛卡尔积：取A,B集合所有组合情况
++ 多表查询：从多张表查询数据
+  + 连接查询
+    + 内连接：相当于查询A B交集数据
+    + 外连接：
+      1. 左外连接：相当于查询A表所有数据的交集部分数据
+      2. 右外连接：相当于查询B表所有数据的交集部分数据
+  + 子查询
+
+<img src="README.assets/image-20220225163206710.png" alt="image-20220225163206710" style="zoom:80%;" /> 
+
+
+
+
+
+
+
+
+
+#### 1. 内连接
+
+
+
++ 内连接查询语法
+
+~~~mysql
+-- 隐式内链接
+select 字段列表 from 表1,表2... where 条件;
+
+-- 显式内连接
+select 字段列表 from 表1 [insert] join 表2 on 条件;
+~~~
+
+内连接相当于查询A B交集数据
+
+<img src="README.assets/image-20220225163206710.png" alt="image-20220225163206710" style="zoom:80%;" /> 
+
+
+
+示例：
+
+~~~mysql
+drop table if exists emp;
+drop table if exists dept;
+
+# 创建部门表
+create table dept(
+   did int primary key auto_increment,
+	 dname varchar(20)
+);
+
+# 创建员工表
+create table emp(
+   id int primary key auto_increment, 
+	 name varchar(10),
+	 gender char(1),
+	 salary double, -- 工资
+	 join_date date, -- 入职日期
+	 dep_id int,
+	 foreign key (dep_id) references dept(did) -- 外键，关联部门表（部门表的主键）
+);
+
+-- 添加部门的数据
+insert into dept (dname) values ('研发部'),('市场部'),('财务部'),('销售部');
+
+-- 添加员工数据
+insert into emp (name,gender,salary,join_date,dep_id) VALUES
+('孙悟空','男',7200,'2013-02-24',1),
+('猪八戒','男',3600,'2010-12-02',2),
+('唐僧','男',9000,'2008-08-08',2),
+('白骨精','女',5000,'2015-10-07',3),
+('蜘蛛精','女',4500,'2011-03-14',1),
+('小白龙','男',2500,'2011-02-14',null);
+
+select * from dept;
+select * from emp;
+
+-- 多表查询
+select * from emp,dept;
+
+-- 笛卡尔积：有A,B两个集合 取A,B所有的组合情况
+
+-- 需要消除无效数据
+
+-- 怎么消除？查询emp 和 dept 的数据，emp.dep_id = dept.did
+-- 隐式内连接
+select * from emp,dept where emp.dep_id = dept.did;
+
+-- 查询emp的name,gender,dept表的dname
+select emp.name,emp.gender,dept.dname from emp,dept where emp.dep_id = dept.did;
+
+-- 给表起别名
+select t1.name,t1.gender,t2.dname from emp t1 , dept t2 where t1.dep_id = t2.did;
+
+-- 显式内连接
+select * from emp inner join dept on emp.dep_id = dept.did;
+
+select * from emp join dept on emp.dep_id = dept.did;
+~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### 2. 外连接
+
+
+
++ 外连接查询语法
+
+~~~mysql
+-- 左外连接
+select 字段列表 from 表1 left [outer] join 表2 on 条件;
+
+-- 右外连接
+select 字段列表 from 表1 right [outer] join 表2 on 条件;
+~~~
+
+1. 左外连接：相当于查询A表所有数据的交集部分数据
+2. 右外连接：相当于查询B表所有数据的交集部分数据
+
+<img src="README.assets/image-20220225163206710.png" alt="image-20220225163206710" style="zoom:80%;" /> 
+
+示例：
+
+~~~mysql
+drop table if exists emp;
+drop table if exists dept;
+
+# 创建部门表
+create table dept(
+   did int primary key auto_increment,
+	 dname varchar(20)
+);
+
+# 创建员工表
+create table emp(
+   id int primary key auto_increment, 
+	 name varchar(10),
+	 gender char(1),
+	 salary double, -- 工资
+	 join_date date, -- 入职日期
+	 dep_id int,
+	 foreign key (dep_id) references dept(did) -- 外键，关联部门表（部门表的主键）
+);
+
+-- 添加部门的数据
+insert into dept (dname) values ('研发部'),('市场部'),('财务部'),('销售部');
+
+-- 添加员工数据
+insert into emp (name,gender,salary,join_date,dep_id) VALUES
+('孙悟空','男',7200,'2013-02-24',1),
+('猪八戒','男',3600,'2010-12-02',2),
+('唐僧','男',9000,'2008-08-08',2),
+('白骨精','女',5000,'2015-10-07',3),
+('蜘蛛精','女',4500,'2011-03-14',1),
+('小白龙','男',2500,'2011-02-14',null);
+
+select * from dept;
+select * from emp;
+
+-- 左外连接
+-- 查询emp表中所有的数据和对应的部门信息
+select * from emp left join dept on emp.dep_id = dept.did;
+
+-- 右外连接
+-- 查询dept表中所有的数据和对应的员工信息
+select * from emp right join dept on emp.dep_id = dept.did;
+
+-- 一般情况下我们使用左外连接
+~~~
+
+
+
+
+
+
+
+
+
+
+
