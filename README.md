@@ -2400,3 +2400,932 @@ select * from emp right join dept on emp.dep_id = dept.did;
 
 
 
+#### 3. 子查询
+
+
+
+子查询概念：
+
++ 查询中嵌套查询，称嵌套查询为子语句
+
+
+
+子查询根据查询结果的不同，作用不同：
+
++ 单行单列
++ 多行单列
++ 多行多列
+
+
+
+
+
+1. 子查询根据查询结果的不同，作用不同：
+
+
+
+
+   + 单行单列：作为条件值，使用 `= != > <` 等进行条件判断
+
+   ~~~mysql
+   select 字段列表 from 表 where 字段名 = (子查询);
+   ~~~
+
+
+
++ 多行单列：作为条件值，使用in等关键字进行条件判断
+
+~~~mysql
+select 字段列表 from 表 where 字段名 in (子查询);
+~~~
+
+
+
++ 多行多列：作为虚拟表
+
+~~~mysql
+select 字段列表 from (子查询) where 条件;
+~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 1.9 事务
+
+
+
+数据库的事务 (Transaction) 是一种机制、一个操作序列，包含了==一组数据库操作命令== 事务把所有的命令作为一个整体一起向系统提交或撤销操作请求，即这一组数据库命令 ==要么同时成功，要么同时失败==
+
+事务是一个不可分割的工作逻辑单元
+
+简单来说就是防止异常事件影响数据库中的值
+
+<img src="README.assets/image-20220228132145196.png" alt="image-20220228132145196" style="zoom:80%;" /> 
+
+~~~mysql
+-- 开启事务
+start transaction;
+或者 begin;
+
+-- 提交事务
+commit;
+
+-- 回滚事务
+rollback;
+~~~
+
+<img src="README.assets/image-20220228222545295.png" alt="image-20220228222545295" style="zoom:80%;" /> 
+
+
+
+示例：
+
+~~~mysql
+drop table if exists account;
+
+-- 创建账户表
+create table account (
+   id int primary key auto_increment,
+	 name varchar(10),
+	 money double(10, 2)
+);
+
+-- 添加数据
+insert into account(name,money) VALUES ('张三',1000),('李四',1000);
+
+select * from account;
+
+-- 开启事务
+begin;
+-- 转账操作
+-- 1. 查询李四的余额
+select name,money from account where name='李四';
+
+-- 李四金额-500
+update account set money = money - 500 where name='李四';
+
+假设这里出现错误
+
+-- 张三金额+500
+update account set money = money + 500 where name='张三';
+
+-- 提交事务
+commit;
+
+-- rollback 回滚事务
+rollback;
+~~~
+
+
+
+事务四大特征 （ACID）
+
++ 原子性（Atomicty）：事务是不可分割的最小操作单位，要么同时成功，要么同时失败
++ 一致性（Consistency）：事务完成时，必须使所有的数据都保持一致状态
++ 隔离性（Isolation）：多个事务之间，操作的可见性
++ 持久性（Durability）：事务一旦提交或回滚，它对数据库中的数据的改变就是永久的
+
+
+
+MySQL事务默认自动提交
+
+~~~mysql
+-- 查看事务的默认提交方式
+select @@autocommit;
+
+-- 1自动提交 0手动提交
+-- 修改事务提交方式
+set @@autocommit = 0;
+~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 2. JDBC
+
+
+
++ JDBC 就是使用Java语言操作关系型数据库的一套API
++ 全称：（Java DataBase Connectivity）Java 数据库连接
+
+<img src="README.assets/image-20220301220613746.png" alt="image-20220301220613746" style="zoom:80%;" /> 
+
+
+
+JDBC 本质
+
++ 官方（sun 公司）定义的一套操作所有关系型数据库的规则，即接口
++ 各个数据库厂商去实现这套接口，提供数据库驱动jar包
++ 我们可以使用这套接口（JDBC）编程，真正执行的代码是驱动jar包中的实现类
+
+<img src="README.assets/image-20220301221125374.png" alt="image-20220301221125374" style="zoom:80%;" /> 
+
+JDBC 的好处：
+
++ 各个数据库厂商使用相同的接口，Java代码不需要针对不同数据库分别开发
++ 可以随时替换底层数据库，访问数据库的Java代码基本不变
+
+
+
+
+
+
+
+### 2.1 JDBC 快速入门
+
+
+
+步骤：
+
+1. 创建工程，导入驱动jar包
+
+具体步骤：
+
++ $$New\rightarrow Project\rightarrow EmptyProject\rightarrow Project调整SDK和项目语言级别至同一版本$$
++ $$newMoudues\rightarrow 创建模块，导入驱动jar包(复制jar包，粘贴至工程目录下，右键粘贴，右键添加到项目库)选择jar包生效的范围，选择模块有效$$
+
+1. 注册驱动
+
+~~~java
+Class.forName("com.mysql.jdbc.Driver");
+
+//注意：此代码有版本区别，5.X使用 "com.mysql.jdbc.Driver"，8.X使用 "com.mysql.cj.jdbc.Diver"
+~~~
+
+3. 获取连接
+
+~~~java
+Connection conn = DriverManager.getConnection(url,username,password);
+~~~
+
+4. 获取执行SQL对象
+
+~~~java
+String sql = "update...";
+~~~
+
+5. 执行SQL
+
+~~~java
+stmt.executeUpdate(sql);
+~~~
+
+6. 处理返回结果
+7. 释放资源
+
+<img src="README.assets/image-20220301221957183.png" alt="image-20220301221957183" style="zoom: 67%;" /> 
+
+示例：
+
+~~~java
+package edu.nynujdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+
+/***
+ * JDBC快速入门
+ */
+public class JDBCDemo {
+    public static void main(String[] args) throws Exception {
+        //1. 注册驱动
+        Class.forName("com.mysql.cj.jdbc.Driver");
+
+        //2. 获取连接
+        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //3. 定义sql
+        String sql = "update account set money=2000 where id=1";
+
+        //4. 获取执行sql的对象Statement
+        Statement stmt = conn.createStatement();
+
+        //5. 执行sql
+        int count = stmt.executeUpdate(sql); //受影响的行数
+
+        //6. 处理结果
+        System.out.println(count);
+
+        //7. 释放资源
+        stmt.close();
+        conn.close();
+    }
+}
+~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 2.2 JDBC API 详解
+
+
+
++ DriverManager
++ Connection
++ Statement
++ ResultSet
++ PrepareSatement
+
+
+
+
+
+#### 1. DriverManager
+
+
+
++ DriverManager（驱动管理类）作用：
+  1. 注册驱动
+  2. 获取数据库连接
+
+注册驱动：
+
+~~~java
+Class.forName("com.mysql.cj.jdbc.Driver");
+~~~
+
+查看Driver类源码
+
+~~~java
+static {
+    try {
+        DriverManager.registerDriver(new Driver());
+    } catch (SQLException var1) {
+        throw new RuntimeException("Can't register driver!");
+    }
+}
+~~~
+
+提示：
+
++ MySQL 5 之后的驱动包，可以省略注册驱动的步骤
++ 自动加载jar包中META-INF/services/java.sql.Driver文件中的驱动类
+
+
+
+2. 获取连接
+
+~~~java
+static Connection getConnecction(String url, String user, String password)
+~~~
+
+参数：
+
+1. url：连接路径
+
+~~~markdown
+语法：jdbc:mysql://ip地址(域名):端口号/数据库名称?参数键值对1&参数键值对2...
+示例：jdbc:mysql://127.0.0.1:3306/db1
+也可以：jdbc:mysql://localhost:3306/db1
+细节：
+ + 如果你连接的是本机mysql服务器，并且mysql服务默认端口是3306，则url可以简写为：jdbc:mysql:///数据库名称?参数键值对
+ + 配置 useSSL=false参数，禁用安全连接方式，解决警告提示
+
+协议：jdbc:mysql:
+~~~
+
+2. user：用户名
+3. password：密码
+
+
+
+示例：
+
+~~~java
+package edu.nynujdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+
+/***
+ * JDBC API: DriverManager详解
+ */
+public class JDBCDemo2_DriverManager {
+    public static void main(String[] args) throws Exception {
+        //1. 注册驱动
+        //Class.forName("com.mysql.cj.jdbc.Driver"); //mysql5.x以后的版本都可以不写
+
+        //2. 获取连接：如果你连接的是本机的mysql那么你可以直接简化书写
+//        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String url = "jdbc:mysql:///db1?useSSL=false";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //3. 定义sql
+        String sql = "update account set money=2000 where id=1";
+
+        //4. 获取执行sql的对象Statement
+        Statement stmt = conn.createStatement();
+
+        //5. 执行sql
+        int count = stmt.executeUpdate(sql); //受影响的行数
+
+        //6. 处理结果
+        System.out.println(count);
+
+        //7. 释放资源
+        stmt.close();
+        conn.close();
+    }
+}
+~~~
+
+
+
+
+
+
+
+
+
+#### 2. Connection
+
+
+
+Connection（数据库连接对象）作用
+
+1. 获取执行SQL的对象
+2. 管理事务
+
+
+
+1. 获取执行SQL对象
+   + 普通执行SQL对象
+
+~~~java
+Statement createStatement()
+~~~
+
++ 预编译SQL的执行SQL对象：防止SQL注入
+
+~~~java
+PreparedStatement prepareStatement(sql)
+~~~
+
++ 执行存储过程的对象
+
+~~~java
+CallableStatement prepareCall(sql)
+~~~
+
+
+
+2. 事务管理
+   + MySQL事务管理
+
+~~~mysql
+开启事务：BEGIN;/START TANSACTION
+提交事务：COMMIT;
+回滚事务：ROLLBACK;
+
+MySQL默认自动提交事务
+~~~
+
+
+
+   + JDBC事务管理：Connection接口中定义了3个对应的方法
+
+~~~mysql
+setAutoCommit(boolean autoCommit): true为自动提交事务；false为手动提交事务，即为开启事务
+提交事务：commit()
+回滚事务：rollback()
+~~~
+
+
+
+示例：
+
+~~~java
+package edu.nynujdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+/***
+ * JDBC API: Connection详解
+ */
+public class JDBCDemo3_Connection {
+    public static void main(String[] args) throws Exception {
+        //1. 注册驱动
+        //Class.forName("com.mysql.cj.jdbc.Driver"); //mysql5.x以后的版本都可以不写
+
+        //2. 获取连接：如果你连接的是本机的mysql那么你可以直接简化书写
+//        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String url = "jdbc:mysql:///db1?useSSL=false";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //3. 定义sql
+        String sql1 = "update account set money=3000 where id=1";
+        String sql2 = "update account set money=3000 where id=2";
+
+        //4. 获取执行sql的对象Statement
+        Statement stmt = conn.createStatement();
+
+        //5. 执行sql
+        try {
+            //开启事务
+            conn.setAutoCommit(false);
+            int count1 = stmt.executeUpdate(sql1); //受影响的行数
+
+            //6. 处理结果
+            System.out.println(count1);
+
+            //手动创造异常
+            int i = 3 / 0;
+
+            //5. 执行sql
+            int count2 = stmt.executeUpdate(sql2); //受影响的行数
+
+            //6. 处理结果
+            System.out.println(count2);
+
+            //提交事务
+            conn.commit();
+        } catch (Exception throwables) {
+            //回滚事务
+            conn.rollback();
+            throwables.printStackTrace();
+        }
+
+        //7. 释放资源
+        stmt.close();
+        conn.close();
+    }
+}
+~~~
+
+> 在java中如何管理事务处理异常的机制？
+>
+> 1. try/catch方法
+> 2. 使用特定的管理事务语句
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### 3. Statement
+
+
+
+1. Statement作用
+   + 执行SQL语句
+
+~~~java
+int executeUpdate(sql):执行DML、DDL语句
+    返回值：
+    1.DML语句影响的行数
+    2.DDL语句执行后，执行成功也可能返回0
+~~~
+
+示例：
+
+~~~java
+package edu.nynujdbc;
+
+import org.junit.Test;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+
+/***
+ * JDBC API: Statement详解
+ */
+public class JDBCDemo4_Statement {
+
+    /***
+     * 执行DML语句
+     * @throws Exception
+     */
+
+    @Test
+    public void testDML() throws Exception {
+        //1. 注册驱动
+        //Class.forName("com.mysql.cj.jdbc.Driver"); //mysql5.x以后的版本都可以不写
+
+        //2. 获取连接：如果你连接的是本机的mysql那么你可以直接简化书写
+//        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String url = "jdbc:mysql:///db1?useSSL=false";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //3. 定义sql
+        String sql1 = "update account set money=3000 where id=1";
+
+        //4. 获取执行sql的对象Statement
+        Statement stmt = conn.createStatement();
+
+        //5. 执行sql
+        try {
+            //开启事务
+            conn.setAutoCommit(false);
+            int count1 = stmt.executeUpdate(sql1); //执行完DML语句后，受影响的行数
+
+            //6. 处理结果
+            if (count1 > 0) {
+                System.out.println("修改成功");
+            } else {
+                System.out.println("修改失败");
+            }
+
+            //提交事务
+            conn.commit();
+        } catch (Exception throwables) {
+            //回滚事务
+            conn.rollback();
+            throwables.printStackTrace();
+        }
+
+
+        //7. 释放资源
+        stmt.close();
+        conn.close();
+
+    }
+
+
+    /***
+     * 执行DDL语句
+     * @throws Exception
+     */
+
+    @Test
+    public void testDDL() throws Exception {
+        //1. 注册驱动
+        //Class.forName("com.mysql.cj.jdbc.Driver"); //mysql5.x以后的版本都可以不写
+
+        //2. 获取连接：如果你连接的是本机的mysql那么你可以直接简化书写
+//        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String url = "jdbc:mysql:///db1?useSSL=false";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //3. 定义sql
+        String sql1 = "drop database db2";
+
+        //4. 获取执行sql的对象Statement
+        Statement stmt = conn.createStatement();
+
+        int count = stmt.executeUpdate(sql1); //执行完DDL语句后，返回的数字可能是0但是执行成功了
+
+        /*
+        //5. 执行sql
+        try {
+            //开启事务
+            conn.setAutoCommit(false);
+            int count1 = stmt.executeUpdate(sql1); //执行完DML语句后，受影响的行数
+
+            //6. 处理结果
+            if (count1 > 0) {
+                System.out.println("修改成功");
+            } else {
+                System.out.println("修改失败");
+            }
+
+            //提交事务
+            conn.commit();
+        } catch (Exception throwables) {
+            //回滚事务
+            conn.rollback();
+            throwables.printStackTrace();
+        }
+
+         */
+
+        System.out.println(count);
+
+
+        //7. 释放资源
+        stmt.close();
+        conn.close();
+
+    }
+}
+~~~
+
+
+
+
+
+
+
+
+
+
+
+#### 4. ResultSet⭐
+
+
+
++ ResultSet（结果集对象）作用：
+  1. 封装了DQL查询语句的结果
+
+~~~java
+ResultSet executeQuery(sql):执行DQL语句
+    返回值：ResultSet结果集对象
+
+ResultSet stmt.executeQuery(sql)：执行DQL语句，返回ResultSet对象
+~~~
+
+
+
++ 获取查询结果
+
+~~~java
+boolean next():
+1. 将光标从当前位置向前移动一行
+2. 判断当前行是否为有效行
+    返回值：
+    1. true：有效行，当前行有数据
+    2. false：无效行，当前行没有数据
+~~~
+
+~~~java
+xxx getXxx(参数)：获取数据
+    xxx：数据类型，如：int getInt(参数);String getString(参数)
+参数：
+    int：列的编号，从1开始
+    String：列的名称
+~~~
+
+
+
+使用步骤：
+
+1. 游标向下移动一行，并判断该行是否有数据
+2. 获取数据：getXXX(参数)
+
+~~~java
+//循环判断游标是否是最后一行末尾
+while(rs.next()) {
+    //获取数据
+    rs.getXXX(参数);
+}
+~~~
+
+
+
+<font size="5rem">ResultSet案例</font>
+
+需求：查询account账户表的数据，封装为Account对象中，并且存储到ArrayList集合中
+
+<img src="README.assets/image-20220302214125194.png" alt="image-20220302214125194" style="zoom:80%;" /> 
+
+示例：
+
+~~~java
+package edu.nynu.jdbc;
+
+import edu.nynu.pojo.Account;
+import org.junit.Test;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+
+/***
+ * JDBC API: ResultSet详解
+ */
+public class JDBCDemo5_ResultSet {
+
+    /***
+     * 执行DQL语句
+     * @throws Exception
+     */
+
+    @Test
+    public void testResultSet() throws Exception {
+        //1. 注册驱动
+        //Class.forName("com.mysql.cj.jdbc.Driver"); //mysql5.x以后的版本都可以不写
+
+        //2. 获取连接：如果你连接的是本机的mysql那么你可以直接简化书写
+//        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String url = "jdbc:mysql:///db1?useSSL=false";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //定义sql
+        String sql = "select * from account";
+
+        //获取执行对象Statement
+        Statement stmt = conn.createStatement();
+
+        //执行sql
+        ResultSet rs = stmt.executeQuery(sql);
+
+        //处理结果，遍历rs中所有的数据
+        while (rs.next()) {
+            //获取数据
+            int id = rs.getInt(1);
+            String name = rs.getString(2);
+            double money = rs.getDouble(3);
+
+            System.out.println(id);
+            System.out.println(name);
+            System.out.println(money);
+
+            System.out.println("---------");
+        }
+
+        while (rs.next()) {
+            //获取数据
+            int id = rs.getInt("id");
+            String name = rs.getString("name");
+            double money = rs.getDouble("money");
+
+            System.out.println(id);
+            System.out.println(name);
+            System.out.println(money);
+
+            System.out.println("---------");
+        }
+
+        rs.close();
+        stmt.close();
+        conn.close();
+    }
+
+
+    /***
+     * 需求：查询account账户表的数据，封装为Account对象中，并且存储到ArrayList集合中
+     * 1.定义实体类Account
+     * 2.查询数据，封装到Account对象中
+     * 3.将Account对象存入ArrayList集合中
+     * @throws Exception
+     */
+    
+    @Test
+    public void testResultSet2() throws Exception {
+        //1. 注册驱动
+        //Class.forName("com.mysql.cj.jdbc.Driver"); //mysql5.x以后的版本都可以不写
+
+        //2. 获取连接：如果你连接的是本机的mysql那么你可以直接简化书写
+//        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String url = "jdbc:mysql:///db1?useSSL=false";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //定义sql
+        String sql = "select * from account";
+
+        //获取执行对象Statement
+        Statement stmt = conn.createStatement();
+
+        //执行sql
+        ResultSet rs = stmt.executeQuery(sql);
+
+        //创建集合
+        List<Account> list = new ArrayList<>();
+
+        while (rs.next()) {
+            Account account = new Account();
+
+            //获取数据
+            int id = rs.getInt("id");
+            String name = rs.getString("name");
+            double money = rs.getDouble("money");
+
+            //赋值
+            account.setId(id);
+            account.setName(name);
+            account.setMoney(money);
+
+            //添加到集合中
+            list.add(account);
+        }
+
+        System.out.println(list);
+
+        rs.close();
+        stmt.close();
+        conn.close();
+    }
+}
+~~~
+
+
+
+
+
+
+
+
+
+
+
+#### 5. PerpareStatement
+
+
+
+PreparedStatement作用：
+
+1. 预编译SQL语句并执行：预防SQL注入问题
+
+
+
+SQL注入
+
+1. SQL注入是通过操作输入来修改事先定义好的SQL语句，用以达到执行代码对服务器进行攻击的方法
+
+
+
+<font size="5rem">步骤：SQL注入演示</font>
+
+~~~java
+select * from tb_user where username='zhangsan' and password='123';
+~~~
+
