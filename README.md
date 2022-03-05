@@ -3325,7 +3325,510 @@ SQL注入
 
 <font size="5rem">步骤：SQL注入演示</font>
 
+需求：完成用户登录
+
 ~~~java
 select * from tb_user where username='zhangsan' and password='123';
+
+select * from tb_user where username = 'dadadadadasd' and password = '' or '1' = '1'
 ~~~
 
+SQL注入原理：
+
+用户在密码界面输入 `' or '1' = '1`，相当于 password项 组成一个新的字符串密码，且为一个恒等式，故登录成功
+
+select * from tb_user where username = 'dadadadadasd' and password = ' ==' or '1' = '1== '
+
+> 本质上SQL注入是在传入参数时，语句拼接字符串导致的
+
+
+
+
+
++ PrepareStatement作用：
+  1. 预编译SQL并执行SQL语句
+
+
+
+1. 获取 PrepareStatement 对象
+
+~~~java
+//SQL语句中的参数值，使用占位符 ? 代替
+String sql = "select * from user where username = ? and password = ?"
+    
+//通过Connection对象获取，并传入对应的SQL语句
+PrepareStatement pstmt = conn.prepareStatement(sql);
+~~~
+
+2. 设置参数值
+
+~~~java
+PrepareStatement对象: setXxx(参数1, 参数2) : 给 ? 赋值
+    XXX: 数据类型，如 setInt(参数1, 参数2)
+        参数：
+            参数1：? 的位置编号，从1开始
+            参数2：? 的值
+~~~
+
+3. 执行SQL
+
+~~~Java
+executeUpdate():/executeQuery(); 不需要再传递sql
+~~~
+
+
+
+示例：
+
+~~~java
+package edu.nynu.jdbc;
+
+import org.junit.Test;
+
+import java.sql.*;
+
+/***
+ * Java API详解：PrepareStatement
+ */
+public class JDBCDemo7_PrepareStatement {
+
+    /***
+     *
+     * @throws Exception
+     */
+
+    @Test
+    public void testPrepareStatement() throws Exception {
+
+        //2. 获取连接：如果你连接的是本机的mysql那么你可以直接简化书写
+//        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String url = "jdbc:mysql:///db1?useSSL=false";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //获取用户名输入和密码
+        String name = "zhangsan";
+        String pwd = "' or '1' = '1";  //再次进行SQL注入，显示登录失败
+
+        //定义sql，需要拼接字符串的位置改为使用占位符 "?" 代替
+        String sql = "select * from tb_user where username = ? and password = ?";
+
+        //获取pstmr对象
+        PreparedStatement pstmt = conn.prepareStatement(sql);
+
+        //设置 ? 的值
+        pstmt.setString(1, name);
+        pstmt.setString(2, pwd);
+
+        //执行SQL
+        ResultSet rs = pstmt.executeQuery();
+
+        //判断登录是否成功
+        if (rs.next()) {
+            System.out.println("登陆成功");
+        } else {
+            System.out.println("登陆失败");
+        }
+
+        //7.释放资源
+        rs.close();
+        pstmt.close();
+        conn.close();
+    }
+
+
+    //演示SQL注入
+    @Test
+    public void testLogin_Inject() throws Exception {
+
+        //2. 获取连接：如果你连接的是本机的mysql那么你可以直接简化书写
+//        String url = "jdbc:mysql://127.0.0.1:3306/db1";
+        String url = "jdbc:mysql:///db1?useSSL=false";
+        String username = "root";
+        String password = "225323083";
+        Connection conn = DriverManager.getConnection(url, username, password);
+
+        //获取用户名输入和密码
+        String name = "dadadadadasd";
+        String pwd = "' or '1' = '1";
+
+        String sql = "select * from tb_user where username = '" + name + "' and password = '" + pwd + "'";
+        System.out.println(sql);  //打印语句
+
+        //获取stmt对象
+        Statement stmt = conn.createStatement();
+
+        //执行sql
+        ResultSet rs = stmt.executeQuery(sql);
+
+        //判断登录是否成功
+        if (rs.next()) {
+            System.out.println("登陆成功");
+        } else {
+            System.out.println("登陆失败");
+        }
+
+        //7.释放资源
+        rs.close();
+        stmt.close();
+        conn.close();
+    }
+}
+~~~
+
+为什么 `PrepareStatement` 对象会使得 SQL注入失效？
+
+1. 因为PrepareStatement会把传入的参数进行转义
+2. 会转义成这样 ' ==\\'== or  ==\\'==1==\\'== = ==\\'==1 '
+
+
+
+
+
+
+
+#### 6. PerpareStatement 原理⭐
+
+
+
+PerpareStatement 好处：
+
+1. 预编译SQL：性能更高
+2. 防止SQL注入：将敏感字符进行转义
+
+
+
+1. PerpareStatement 预编译功能开启：useServerPreStmts=true
+
+2. 配置MySQL执行日志（重启mysql服务后生效）
+
+~~~mysql
+log-output=FILE
+general-log=1
+general_log_file="D:\mysql.log"
+slow-query-log=1
+slow_query_log_file="D:\mysql_slow.log"
+long_query_time=2
+~~~
+
++ PerpareStatement 原理：
+  1. 在获取PrepareStatement 对象时，将sql语句发送给mysql服务器进行检查，编译（这些步骤很耗时）
+  2. 执行时就不用再进行这些步骤了，速度更快
+  3. 如果sql模板一样，则只需要进行一次检查、编译
+
+![image-20220303230742251](README.assets/image-20220303230742251.png)
+
+![image-20220303231122614](README.assets/image-20220303231122614.png)
+
+![image-20220304002644726](README.assets/image-20220304002644726.png)
+
+![image-20220303225247752](README.assets/image-20220303225247752.png)
+
+
+
+
+
+
+
+
+
+### 2.3 数据库连接池
+
+
+
+数据库连接池 是个容器，负责分配、管理数据库连接（Connection）
+
+它允许应用程序重复使用一个现有的数据库连接，而不是重新再建立一个
+
+释放空闲时间超过最大空闲时间的数据库连接来避免因为没有释放数据库连接而引起的数据库连接遗漏
+
+
+
+好处：
+
+1. 资源重用
+2. 提升系统响应速度
+3. 避免数据库连接遗漏
+
+![image-20220304003517333](README.assets/image-20220304003517333.png)
+
+
+
+标准接口：DataSource
+
++ 官方（SUN）提供的数据库连接池标准接口，由第三方组织实现此接口
+
++ 功能：获取链接
+
+  ~~~java
+  Connection getConnection()
+  ~~~
+
++ 常见的数据库连接池
+
+  1. DBCP
+  2. C3P0
+  3. Druid
+
++ Druid（德鲁伊）
+
+  + Druid连接池是阿里巴巴开源的数据库连接池项目
+  + 功能强大，性能优秀，是Java语言最好的数据库连接池之一
+
+
+
+<font size="5rem">Driud 使用步骤</font>
+
+1. 导入jar包 druid-1.1.12 jar
+2. 定义配置文件
+3. 加载配置文件
+4. 获取数据库连接池对象
+5. 获取数据库连接池对象
+6. 获取连接
+
+
+
+示例：
+
+~~~java
+diverClassName=com.mysql.cj.jdbc.Driver
+url=jdbc:mysql:///db1?useSSL=false&useServerPrepStmts=true&allowPublicKeyRetrieval=true
+username=root
+password=225323083
+
+# 初始化连接数量
+initialSize=5
+
+# 最大连接数
+maxActive=10
+
+# 最大等待时间
+maxWait=3000
+~~~
+
+<center>配置文件druid.properties</center>
+
+
+
+~~~java
+package edu.nynu.druid;
+
+import com.alibaba.druid.pool.DruidDataSourceFactory;
+
+import javax.sql.DataSource;
+import java.io.FileInputStream;
+import java.sql.Connection;
+import java.util.Properties;
+
+/***
+ * Druid数据库连接池演示
+ */
+public class DruidDemo {
+    public static void main(String[] args) throws Exception {
+        //1.导入jar包
+
+        //2.定义配置文件
+
+        //3.加载配置文件
+        Properties prop = new Properties();
+        //prop.load(new FileInputStream("src/druid.properties"));
+        prop.load(new FileInputStream("jdbc-demo/src/druid.properties"));
+
+        //4.获取连接池对象
+        DataSource dataSource = DruidDataSourceFactory.createDataSource(prop);
+
+        //5.获取数据库连接 Connection
+        Connection conn = dataSource.getConnection();
+
+        System.out.println(conn);
+
+        //此时运行会出现：src\druid.properties (系统找不到指定的路径。)
+        //解决方法：通过System.getProperty("user.dir")获取当前项目的路径
+        System.out.println(System.getProperty("user.dir"));
+        //E:\IdeaProjects\JavaSE_Code
+    }
+}
+~~~
+
+<center>测试Druid的DruidDemo.java</center>
+
+项目结构：
+
+![image-20220304094517732](README.assets/image-20220304094517732.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 2.4 案例练习
+
+
+
+完成商品品牌数据的增删改查操作
+
+
+
++ 查询：查询所有数据
++ 添加：添加品牌
++ 修改：根据 id修改
++ 删除：根据 id删除
+
+
+
+准备环境：
+
+1. 数据库表 tb_brand
+2. 实体类 Brand
+3. 测试用例
+
+
+
+准备工作：
+
+~~~mysql
+drop table if exists tb_brand;
+
+create table tb_brand (
+   id int primary key auto_increment,
+	 brand_name varchar(20),
+	 company_name varchar(20),
+	 ordered int,
+	 description varchar(100),
+	 status int
+);
+
+INSERT INTO `tb_brand` ( `id`, `brand_name`, `company_name`, `ordered`, `description`, `status` )
+VALUES
+	( 1, '三只松鼠', '三只松鼠股份有限公司', 5, '好吃不上火', 0 );
+INSERT INTO `tb_brand` ( `id`, `brand_name`, `company_name`, `ordered`, `description`, `status` )
+VALUES
+	( 2, '华为', '华为技术有限公司', 100, '华为致力于把数字世界带入每个人、每个家庭、每个组织，构建万物互联的智能世界', 1 );
+INSERT INTO `tb_brand` ( `id`, `brand_name`, `company_name`, `ordered`, `description`, `status` )
+VALUES
+	( 3, '小米', '小米科技有限公司', 50, 'are you ok', 1 );
+	
+select * from tb_brand;
+~~~
+
+<center>tb_brand表</center>
+
+~~~java
+package edu.nynu.pojo;
+
+/***
+ * 品牌
+ * 快速编辑数据库中的字段：
+ * 1. Alt+鼠标左键快速编辑所有字段
+ * 2. 修改数据类型即可
+ *
+ * 在业务中我们推荐使用包装类数据类型来定义变量，因为 int往往具有默认值，会影响业务的状态
+ * 在实体类中，基本数类型建议使用其对应的包装类型
+ */
+
+public class Brand {
+
+    //id 主键
+    private Integer id;
+    //品牌名称
+    private String brandName;
+    //企业名称
+    private String companyName;
+    //排序字段
+    private int ordered;
+    //描述信息
+    private String description;
+    //状态
+    private Integer status;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getBrandName() {
+        return brandName;
+    }
+
+    public void setBrandName(String brandName) {
+        this.brandName = brandName;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
+    }
+
+    public int getOrdered() {
+        return ordered;
+    }
+
+    public void setOrdered(int ordered) {
+        this.ordered = ordered;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    @Override
+    public String toString() {
+        return "brand{" +
+                "id=" + id +
+                ", brandName='" + brandName + '\'' +
+                ", companyName='" + companyName + '\'' +
+                ", ordered=" + ordered +
+                ", description='" + description + '\'' +
+                ", status=" + status +
+                '}';
+    }
+}
+~~~
+
+<center>品牌类Brand.java</center>
+
+
+
+
+
+
+
+
+
+<font size="5rem">回顾配置JDBC的步骤</font>
+
+1. 获取 `Connection`
+2. 定义SQL：select * from tb_brand;:star:
+3. 获取 PrepareStatement 对象
+4. 设置参数：不需要:star:
+5. 执行SQL
+6. 处理结果：`List<Brand>`:star:
+7. 释放资源
+
+> 注意：带 :star: 号的为可变步骤
