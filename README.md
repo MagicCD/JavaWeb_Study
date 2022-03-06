@@ -3363,7 +3363,7 @@ PrepareStatement pstmt = conn.prepareStatement(sql);
 2. 设置参数值
 
 ~~~java
-PrepareStatement对象: setXxx(参数1, 参数2) : 给 ? 赋值
+PrepareStatement 对象: setXxx(参数1, 参数2) : 给 ? 赋值
     XXX: 数据类型，如 setInt(参数1, 参数2)
         参数：
             参数1：? 的位置编号，从1开始
@@ -3819,7 +3819,7 @@ public class Brand {
 
 
 
-
+#### 2.4.1 查询
 
 <font size="5rem">回顾配置JDBC的步骤</font>
 
@@ -3832,3 +3832,204 @@ public class Brand {
 7. 释放资源
 
 > 注意：带 :star: 号的为可变步骤
+
+示例：
+
+~~~java
+package edu.nynu.example;
+
+import com.alibaba.druid.pool.DruidDataSourceFactory;
+import edu.nynu.pojo.Brand;
+import org.junit.Test;
+
+import javax.sql.DataSource;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
+
+/**
+ * 品牌数据的增删改查方法
+ */
+
+public class BrandTest {
+
+    /**
+     * 查询所有
+     * 1. select * from tb_brand;
+     * 2. 参数：不需要
+     * 3. 结果List<Brand>
+     */
+
+    @Test
+    public void testSelectAll() throws Exception {
+        //1.获取Connection
+        Properties prop = new Properties();
+        prop.load(new FileInputStream("src/druid.properties"));
+
+        //4.获取连接池对象
+        DataSource dataSource = DruidDataSourceFactory.createDataSource(prop);
+
+        //5.获取数据库连接 Connection
+        Connection conn = dataSource.getConnection();
+
+        //System.out.println(System.getProperty("user.dir"));
+
+        //2.定义SQL
+        String sql = "select * from tb_brand";
+
+        //3.获取PrepareStatement对象
+        PreparedStatement pstmt = conn.prepareStatement(sql);
+
+        //4.设置参数
+
+        //5.执行SQL
+        ResultSet rs = pstmt.executeQuery(sql);
+
+        List<Brand> brands = new ArrayList<Brand>();
+        //解决循环中申请多个对象所占用的空间
+        Brand brand = null;
+
+        //6.处理结果 List<Brand> 封装 Brand对象，装载List集合
+        while (rs.next()) {
+            //获取数据
+            int id = rs.getInt("id");
+            String brandName = rs.getString("brand_name");
+            String companyName = rs.getString("company_name");
+            int ordered = rs.getInt("ordered");
+            String description = rs.getString("description");
+            int status = rs.getInt("status");
+            //封装Brand对象
+            brand = new Brand();
+            brand.setId(id);
+            brand.setBrandName(brandName);
+            brand.setCompanyName(companyName);
+            brand.setOrdered(ordered);
+            brand.setDescription(description);
+            brand.setStatus(status);
+            //装载集合
+            brands.add(brand);
+        }
+
+        System.out.println(brands);
+
+        //7.释放资源
+        rs.close();
+        pstmt.close();
+        conn.close();
+    }
+}
+~~~
+
+<center>处理查询数据BrandTest.java</center>
+
+
+
+
+
+
+
+
+
+#### 2.4.2 添加
+
+
+
+1. 编写SQL语句
+
+~~~mysql
+insert into tb_brand (字段名) values (?);
+~~~
+
+2. 是否需要参数？需要：除了id之外的所有数据
+3. 返回结果如何封装？Boolean
+
+
+
+示例：
+
+~~~java
+/**
+     * 添加
+     * 1. SQL：insert into tb_brand(?) values (?)
+     * 2. 参数：需要，除了id之外的所有信息
+     * 3. 结果Boolean
+     */
+@Test
+public void testAdd() throws Exception {
+    //获取页面提交的参数
+    String brandName = "香喷喷";
+    String companyName = "香喷喷";
+    int ordered = 1;
+    String description = "绕地球一圈";
+    int status = 1;
+
+    //1.获取Connection
+    Properties prop = new Properties();
+    prop.load(new FileInputStream("src/druid.properties"));
+
+    //4.获取连接池对象
+    DataSource dataSource = DruidDataSourceFactory.createDataSource(prop);
+
+    //5.获取数据库连接 Connection
+    Connection conn = dataSource.getConnection();
+
+    //System.out.println(System.getProperty("user.dir"));
+
+    //2.定义SQL
+    String sql = "insert into tb_brand(brand_name,company_name,ordered,description,status) values (?,?,?,?,?);";
+
+    //3.获取PrepareStatement对象
+    PreparedStatement pstmt = conn.prepareStatement(sql);
+
+    //4.设置参数
+    pstmt.setString(1, brandName);
+    pstmt.setString(2, companyName);
+    pstmt.setInt(3, ordered);
+    pstmt.setString(4, description);
+    pstmt.setInt(5, status);
+
+    //5.执行SQL
+    int count = pstmt.executeUpdate();//影响的行数
+
+    //处理结果
+    System.out.println(count > 0);
+
+    //7.释放资源
+    pstmt.close();
+    conn.close();
+}
+~~~
+
+
+
+
+
+
+
+
+
+#### 2.4.3 修改
+
+
+
+1. 编写 SQL 语句
+2. 是否需要参数？需要：Brand 对象所有数据
+3. 返回结果如何封装？Boolean
+
+~~~mysql
+update tb_brand
+set brand_name=?,
+    company_name=?,
+    ordered=?,
+    description=?
+    status=?
+where id=?
+~~~
+
