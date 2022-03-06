@@ -4033,3 +4033,382 @@ set brand_name=?,
 where id=?
 ~~~
 
+
+
+示例：
+
+~~~java
+/**
+     * 修改
+     * 1. SQL：
+     * update tb_brand
+              set brand_name=?,
+              company_name=?,
+              ordered=?,
+              description=?,
+              status=?
+       where id=?
+     * 2. 参数：需要所有信息
+     * 3. 结果Boolean
+     */
+    @Test
+    public void testUpdate() throws Exception {
+        //获取页面提交的参数
+        String brandName = "香喷喷";
+        String companyName = "香喷喷";
+        int ordered = 1000;
+        String description = "绕地球一圈";
+        int status = 1;
+        int id = 4;
+
+        //1.获取Connection
+        Properties prop = new Properties();
+        prop.load(new FileInputStream("src/druid.properties"));
+
+        //4.获取连接池对象
+        DataSource dataSource = DruidDataSourceFactory.createDataSource(prop);
+
+        //5.获取数据库连接 Connection
+        Connection conn = dataSource.getConnection();
+
+        //System.out.println(System.getProperty("user.dir"));
+
+        //2.定义SQL
+        String sql = "update tb_brand\n" +
+                "             set brand_name=?,\n" +
+                "                 company_name=?,\n" +
+                "                 ordered=?,\n" +
+                "                 description=?,\n" +
+                "                 status=?\n" +
+                "             where id=?";
+
+        //3.获取PrepareStatement对象
+        PreparedStatement pstmt = conn.prepareStatement(sql);
+
+        //4.设置参数
+        pstmt.setString(1, brandName);
+        pstmt.setString(2, companyName);
+        pstmt.setInt(3, ordered);
+        pstmt.setString(4, description);
+        pstmt.setInt(5, status);
+        pstmt.setInt(6, id);
+
+        //5.执行SQL
+        int count = pstmt.executeUpdate();//影响的行数
+
+        //处理结果
+        System.out.println(count > 0);
+
+        //7.释放资源
+        pstmt.close();
+        conn.close();
+    }
+~~~
+
+
+
+
+
+
+
+
+
+#### 2.4.4 删除
+
+
+
+1. 编写SQL语句
+
+~~~mysql
+delete from tb_brand where id=?;
+~~~
+
+2. 是否需要参数？
+   + 需要：id
+3. 返回结果如何封装？
+   + Boolean
+
+
+
+示例：
+
+~~~java
+/**
+     * 删除
+     * 1. SQL：delete from tb_brand where id=?;
+     * 2. 参数：id
+     * 3. 结果Boolean
+     */
+@Test
+public void testDelete() throws Exception {
+    //获取页面提交的参数
+    int id = 4;
+
+    //1.获取Connection
+    Properties prop = new Properties();
+    prop.load(new FileInputStream("src/druid.properties"));
+
+    //4.获取连接池对象
+    DataSource dataSource = DruidDataSourceFactory.createDataSource(prop);
+
+    //5.获取数据库连接 Connection
+    Connection conn = dataSource.getConnection();
+
+    //System.out.println(System.getProperty("user.dir"));
+
+    //2.定义SQL
+    String sql = "delete from tb_brand where id=?;";
+
+    //3.获取PrepareStatement对象
+    PreparedStatement pstmt = conn.prepareStatement(sql);
+
+    //4.设置参数
+    pstmt.setInt(1, id);
+
+    //5.执行SQL
+    int count = pstmt.executeUpdate();//影响的行数
+
+    //处理结果
+    System.out.println(count > 0);
+
+    //7.释放资源
+    pstmt.close();
+    conn.close();
+}
+~~~
+
+
+
+
+
+
+
+
+
+
+
+## 3. Maven
+
+
+
++ Maven 是专门用于管理和构建Java项目的工具，它的主要功能有：
+  1. 提供了一套标准化的项目结构
+  2. 提供了一套标准化的构建流程（编译、测试、打包、发布...）
+  3. 提供了一套依赖管理机制
+
+
+
+<font size="5rem" color="#267eef">什么是标准化项目结构？</font>
+
+![image-20220306150831826](README.assets/image-20220306150831826.png)
+
+我们知道，当我们使用不同的 IDE 开发项目时，我们的项目文件结构也会不一样，这样就导致了不同 IDE 开发的项目在其他IDE上不通用的问题。为了解决这个问题 `Maven` 应运而生，`Maven` 提供了一套标准的目录结构，这使得项目在不同 IDE 之间也能够编译运行
+
+![Maven项目的结构](README.assets/image-20220306151310325.png)
+
+> Maven提供了一套标准化的项目结构，所有IDE使用Maven构建的项目结构完全一样，所有IDE创建的Maven项目可以通用
+
+***
+
+<font size="5rem" color="#267eef">什么是标准化的构建流程？</font>
+
+Java项目——>编译——>测试——>打包——>发布
+
+虽然过程不复杂，但是如果模块数量足够大的时候，那么工作量会非常大
+
+而Maven提供了一套简单的代码，可以直接完成上述的这些步骤
+
+***
+
+<font size="5rem" color="#267eef">什么是依赖管理机制？</font>
+
+例如：我们写 JDBC时，需要导入链接数据库的 jar包，这就是依赖
+
++ 依赖管理
+  + 依赖管理其实就是管理你项目所依赖的第三方资源（jar包、插件....）
+
+![传统的依赖导入步骤](README.assets/image-20220306153507898.png)
+
+使用Maven导入你所需要的jar包：
+
+![Maven管理依赖的步骤](README.assets/image-20220306153657189.png)
+
+***
+
+
+
+
+
+
+
+
+
+### 3.1 Maven 简介
+
+
+
+Apache Maven 是一个项目管理和构建==工具==，它基于项目对象模型（ProjectObjectModel）的概念，通过一小段描述信息来管理项目的构建、报告和文档
+
+[Maven项目的官网](https://maven.apache.org/)
+
+
+
+Maven 作用：
+
+1. 标准化的项目结构
+2. 标准化的构建流程
+3. 方便的依赖管理
+
+
+
+Maven 模型：
+
+<img src="README.assets/image-20220306154947794.png" alt="image-20220306154947794" style="zoom:80%;" />
+
+![image-20220306155418315](README.assets/image-20220306155418315.png)
+
+![image-20220306155557754](README.assets/image-20220306155557754.png)
+
+![image-20220306155829680](README.assets/image-20220306155829680.png)
+
+
+
+
+
+
+
+
+
+
+
+### 3.2 Maven 安装配置
+
+
+
+1. 解压 apache-maven-3.6.1.rar 即安装完成
+2. 配置环境变量 MAVEN_HOME 为安装路径的 bin 目录
+3. 配置本地仓库：修改 conf/setting.xml 中的 `<localRepository>` 为一个指定目录
+4. 配置阿里云私服：修改 conf/settings.xml 中的 `<mirros>` 标签，为其添加如下子标签：
+
+~~~java
+<mirror>
+    <id>alimaven</id>
+    <name>aliyun maven</name>
+    <url>http://maven.aliyun.com/nexus/content/groups/public/</url>
+    <mirrorOf>central</mirrorOf>
+</mirror>
+~~~
+
+
+
+
+
+
+
+### 3.3 Maven 基本使用
+
+
+
+#### 3.3.1 Maven 常用命令
+
+1. compile：编译
+2. clean：清理
+3. test：测试
+4. package：打包
+5. install：安装
+
+<iframe src="//player.bilibili.com/player.html?aid=379163696&bvid=BV1Qf4y1T7Hx&cid=440653186&page=44" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" height="650px"> </iframe>
+
+
+
+
+
+#### 3.3.2 Maven 生命周期
+
++ Maven 构建项目生命周期描述的是一次构建过程经历了多少个事件
++ Maven 对项目构建的生命周期划分为3套
+  1. clean：清理工作
+  2. default：核心工作，例如编译、测试、打包、安装等
+  3. site：产生报告，发布站点等
+
+![image-20220306163500244](README.assets/image-20220306163500244.png)
+
+例如：
+
+执行了 `install` 命令，则处于同一周期的 `compile、test、package` 会自动执行
+
+而clean命令不会自动执行，因为不处于同一个生命周期
+
+<img src="README.assets/image-20220306163746998.png" alt="image-20220306163746998" style="zoom: 80%;" /> 
+
+
+
+
+
+
+
+
+
+### 3.4 IDEA 配置 Maven
+
+![image-20220306164443238](README.assets/image-20220306164443238.png)
+
+
+
+
+
+#### 3.4.1 Maven 坐标详解
+
++ 什么是坐标？
+  1. Maven 中的坐标是 ==资源的唯一标识==
+  2. 使用坐标来定义项目或引入项目中需要的依赖
++ Maven 坐标主要组成
+  + groupId：定义当前Maven项目隶属组织名称（通常是域名反写，例如：com.itheima）
+  + artifactId：定义当前Maven项目名称（通常是模块名称，例如 order-service、goods-service）
+  + version：定义当前项目版本号
+
+<img src="README.assets/image-20220306165401413.png" alt="image-20220306165401413" style="zoom:80%;" />
+
+
+
+
+
+
+
+#### 3.4.2 IDEA 创建 Maven 项目
+
+<img src="README.assets/image-20220306165559542.png" alt="image-20220306165559542" style="zoom:80%;" />
+
+
+
+
+
+
+
+#### 3.4.3 IDEA 导入 Maven项目
+
+<img src="README.assets/image-20220306170447064.png" alt="image-20220306170447064" style="zoom:80%;" />
+
+<img src="README.assets/image-20220306170649676.png" alt="image-20220306170649676" style="zoom:80%;" />
+
+
+
+
+
+
+
+#### 3.4.4 依赖管理
+
+<img src="README.assets/image-20220306171308750.png" alt="image-20220306171308750" style="zoom:80%;" /> 
+
+<img src="README.assets/image-20220306224806780.png" alt="image-20220306224806780" style="zoom:80%;" />
+
+<img src="README.assets/image-20220306224901319.png" alt="image-20220306224901319" style="zoom: 80%;" />
+
+
+
+
+
+
+
+##### <font size="5rem">1. 依赖范围</font>
