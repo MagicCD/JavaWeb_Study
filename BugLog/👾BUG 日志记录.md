@@ -34,7 +34,7 @@ java.io.FileNotFoundException: jdbc-demo\src\druid.properties (系统找不到�
 
 
 
-
+<br>
 
 
 
@@ -56,8 +56,48 @@ Annotations are not allowed here 且只有Remove选项
 
 
 
-
+<br>
 
 
 
 ## 🐻pom.xml 没有 properties
+
+
+
+
+
+<br>
+
+
+
+## 😳serverTimezone未设置
+
+<br>
+
+<font color="skybule" size="5rem">具体信息：</font>
+
+java.sql.SQLException: The server time zone value '�й���׼ʱ��' is unrecognized or represents more than one time zone. You must configure either the server or JDBC driver (via the serverTimezone configuration property) to use a more specifc time zone value if you want to utilize time zone support.
+
+![image-20220307172048526](👾BUG 日志记录.assets/image-20220307172048526.png)
+
+<br>
+
+<font size="5rem" color="#3ed1b5">解决方法：</font>
+
+从控制台的报错信息可以得知，错误在没有设置 `serverTimezone`
+
+在MySQL 8.X版本中需要传入时区信息，故需要在 `mybatis-config.xml` 配置文件中添加 `serverTimezone=Asia/Shanghai`
+
+<img src="👾BUG 日志记录.assets/image-20220307172754136.png" alt="image-20220307172754136" style="zoom:80%;" /> 
+
+>在XML中，直接使用一些符号会出差错，所以我们就会一些实体名称来代替
+
+![image-20220307190054446](👾BUG 日志记录.assets/image-20220307190054446.png)
+
+
+
+参考文章：
+
+[serverTimezone错误](https://blog.csdn.net/weixin_44096353/article/details/118715116)
+
+[对实体 "serverTimezone" 的引用必须以 ';' 分隔符结尾](https://www.bbsmax.com/A/VGzl4gg8zb/)

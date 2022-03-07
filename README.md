@@ -4488,3 +4488,225 @@ Maven 模型：
    3. 获取 SqlSession 对象，执行 SQL 语句
    4. 释放资源
 
+
+
+示例：
+
+~~~xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>mybatis-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+
+    <!--MyBatis 依赖-->
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.mybatis/mybatis -->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>3.4.6</version>
+        </dependency>
+
+        <!--MySQL 驱动-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.16</version>
+        </dependency>
+
+        <!--Junit 单元测试-->
+        <!-- https://mvnrepository.com/artifact/junit/junit -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!--添加slf4j日志api-->
+        <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+
+        <!--添加logback-classic依赖-->
+        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
+            <!--<scope>test</scope>-->
+        </dependency>
+
+        <!--添加logback-core依赖-->
+        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-core -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+
+    </dependencies>
+
+</project>
+~~~
+
+<center>pom.xml文件坐标配置</center>
+
+~~~xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <!--数据库的链接信息-->
+                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+                <property name="url" value="jdbc:mysql://localhost:3306/mybatis?useSSL=false&amp;serverTimezone=Asia/Shanghai"/>
+                <property name="username" value="root"/>
+                <property name="password" value="225323083"/>
+            </dataSource>
+        </environment>
+    </environments>
+    <mappers>
+        <!--加载SQL映射文件-->
+        <mapper resource="UserMapper.xml"/>
+    </mappers>
+</configuration>
+~~~
+
+<center>mybatis-config.xml核心配置文件</center>
+
+~~~xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--namespace：名称空间-->
+<mapper namespace="test">
+    <!--id是SQL语句的唯一标识，resultType是对应的返回结果的类型-->
+    <select id="selectAll" resultType="edu.nynu.pojo.User">
+        select * from tb_user;
+    </select>
+
+</mapper>
+~~~
+
+<center>UserMapper.xml SQL映射文件</center>
+
+~~~java
+package edu.nynu;
+
+import edu.nynu.pojo.User;
+import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.SqlSessionFactoryBuilder;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+
+/**
+ * MyBatis 快速入门代码
+ */
+public class MyBatisDemo {
+    public static void main(String[] args) throws IOException {
+        //1. 加载mybatis的核心配置文件，获取 SqlSessionFactory
+        //配置文件的路径
+        String resource = "mybatis-config.xml";
+        InputStream inputStream = Resources.getResourceAsStream(resource);
+        SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+
+        //2.获取SqlSession对象，用它来执行SQL
+        SqlSession sqlSession = sqlSessionFactory.openSession();
+
+        //3.执行SQL
+        // 查询所有，括号里传入的就是对应SQL语句的唯一标识
+        List<User> users = sqlSession.selectList("test.selectAll");
+        //selectOne()查询一个
+
+        System.out.println(users);
+
+        //4.释放资源
+        sqlSession.close();
+    }
+}
+~~~
+
+<center>MyBatisDemo.java编码文件</center>
+
+
+
+解决映射文件报错问题，配置IDEA连接数据库
+
+<img src="README.assets/image-20220307200537611.png" alt="image-20220307200537611" style="zoom:80%;" />
+
+![image-20220307202627430](README.assets/image-20220307202627430.png)
+
+
+
+
+
+
+
+
+
+### 4.2 Mapper 代理开发
+
+
+
++ 目的
+  1. 解决原生方式中的硬编码
+  2. 简化后期执行SQL
+
+<img src="README.assets/image-20220307204305842.png" alt="image-20220307204305842" style="zoom:80%;" /> 
+
+<img src="README.assets/image-20220307204319657.png" alt="image-20220307204319657" style="zoom:80%;" /> 
+
+
+
+
+
+
+
+#### <font size="5rem">4.2.1 使用 Mapper 代理完成入门案例</font>
+
+
+
+1. 定义与 SQL 映射文件同名的 Mapper 接口，并且将 Mapper 接口和 SQL 映射文件放置在同一目录下
+2. 设置 SQL 映射文件的 namespace 属性为 Mapper 接口全限定名
+3. 在 Mapper 接口中定义方法，方法名就是 SQL 映射文件中的SQL语句的id，并保持参数类型和返回组织类型一致
+4. 编码
+   1. 通过 `SqlSession` 的 `getMapper` 方法获取 `Mapper接口的代理对象`
+   2. 调用对应的方法完成 SQL 的执行
+
+> 细节：如果Mapper接口名称和SQL映射文件名称相同，并在同一目录下，则可以使用包扫描的方式简化 SQL 映射文件的加载
+
+<img src="README.assets/image-20220307204936214.png" alt="image-20220307204936214" style="zoom:80%;" /> 
+
+
+
+Maven 结构如下：
+
+<img src="README.assets/image-20220307211229734.png" alt="image-20220307211229734" style="zoom:80%;" /> <img src="README.assets/image-20220307210828956.png" alt="image-20220307210828956" style="zoom:80%;" />实际目录如下，可以看到xml配置文件移动到class文件的同一目录下了
+
+![image-20220307210607393](README.assets/image-20220307210607393.png)
+
+ 
