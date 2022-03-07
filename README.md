@@ -4412,3 +4412,79 @@ Maven 模型：
 
 
 ##### <font size="5rem">1. 依赖范围</font>
+
+通过设置坐标的依赖范围（scope），可以设置 对应jar包的作用范围：编译环境、测试环境、运行环境
+
+<img src="README.assets/image-20220306225218924.png" alt="image-20220306225218924" style="zoom:80%;" /> 
+
+
+
+
+
+
+
+
+
+
+
+## 4. MyBatis
+
+
+
+<font size="5rem" color="skyblue">什么是MyBatis？</font>
+
++ MyBatis 是一款优秀的 ==持久层== 框架，用于简化 JDBC 开发
++ MyBatis 本来是 Apache 的一个开源项目iBatis，2010年这个项目由Apache software foundation 迁移到了Google code，并且改名为MyBatis，2013年11月正式迁移到 Github
++ 官网：https://mybatis.org/mybatis-3/zh/index.html
+
+***
+
+<font size="5rem" color="skyblue">什么是持久层？</font>
+
++ 负责将数据保存到数据库的那一层代码
++ JavaEE三层架构：表现层、业务层、==持久层==
+
+***
+
+<font size="5rem" color="skyblue">什么是框架？</font>
+
++ 框架就是一个半成品软件，是一套可重用的、通用的、软件基础代码模型
++ 在框架的基础之上构建软件编写更加高效、规范、通用、可扩展
+
+***
+
+
+
+<font size="5rem">JDBC 缺点</font>
+
+1. 硬编码
+2. 操作繁琐
+
+<img src="README.assets/image-20220306231423580.png" alt="image-20220306231423580" style="zoom:67%;" />
+
+![image-20220306231652720](README.assets/image-20220306231652720.png)
+
+
+
+
+
+
+
+
+
+### 4.1 MyBatis 快速入门
+
+
+
+查询user表中所有的数据
+
+1. 创建user表，添加数据
+2. 创建模块，导入坐标
+3. 编写 MyBatis 核心配置文件 ——> 替换链接信息 解决硬编码问题
+4. 编写 SQL 映射文件 ——> 统一管理 SQL 语句，解决硬编码问题
+5. 编码
+   1. 定义POJO类
+   2. 加载核心配置文件，获取 SqlSessionFactory 对象
+   3. 获取 SqlSession 对象，执行 SQL 语句
+   4. 释放资源
+
