@@ -101,3 +101,27 @@ java.sql.SQLException: The server time zone value '�й���׼ʱ��' is 
 [serverTimezone错误](https://blog.csdn.net/weixin_44096353/article/details/118715116)
 
 [对实体 "serverTimezone" 的引用必须以 ';' 分隔符结尾](https://www.bbsmax.com/A/VGzl4gg8zb/)
+
+
+
+
+
+## 🦕Error serializing object序列化对象时出错
+
+<br>
+
+<font color="skybule" size="5rem">具体信息：</font>
+
+org.apache.ibatis.cache.CacheException: Error serializing object.  Cause: java.io.NotSerializableException: com.itheima.pojo.Book
+
+![image-20220401222951635](👾BUG 日志记录.assets/image-20220401222951635.png)
+
+<br>
+
+<font size="5rem" color="#3ed1b5">解决方法：</font>
+
+序列化对象时出错
+
+这里可以看出来指的是 Book 没有 实现序列化的接口，故给 Book 类实现一下 序列化接口就行
+
+<img src="👾BUG 日志记录.assets/GIF 2022-4-1 22-34-11.gif" alt="GIF 2022-4-1 22-34-11" style="zoom:80%;" /> 
