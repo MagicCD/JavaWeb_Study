@@ -125,3 +125,37 @@ org.apache.ibatis.cache.CacheException: Error serializing object.  Cause: java.i
 这里可以看出来指的是 Book 没有 实现序列化的接口，故给 Book 类实现一下 序列化接口就行
 
 <img src="👾BUG 日志记录.assets/GIF 2022-4-1 22-34-11.gif" alt="GIF 2022-4-1 22-34-11" style="zoom:80%;" /> 
+
+
+
+
+
+## 🏡Type name pattern expected 需要类型名模式
+
+<br>
+
+<font color="skybule" size="5rem">具体信息：</font>
+
+![image-20220422232040118](👾BUG 日志记录.assets/image-20220422232040118.png)
+
+一般原因为少了逗号或者括号，这里的错误为 `com` 前没有空格
+
+<br>
+
+<font size="5rem" color="#3ed1b5">解决方法：</font>
+
+查看源码后发现，com前没有空格，故错误出在这里
+
+源码如下：
+
+```java
+<xsd:attribute name="expression" use="required" type="xsd:string">
+      <xsd:annotation>
+         <xsd:documentation><![CDATA[
+The pointcut expression.
+
+For example : 'execution(* com.xyz.myapp.service.*.*(..))'
+         ]]></xsd:documentation>
+      </xsd:annotation>
+   </xsd:attribute>
+```
